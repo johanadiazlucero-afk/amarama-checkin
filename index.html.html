@@ -1,0 +1,1667 @@
+<title>AMARAMA POSADA • Registro de Huéspedes</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Fredoka & Quicksand (geométrica redondeada exacta del logo) + Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- QRCode.js para generar QR real de recepción -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        brand: ['"Fredoka"', '"Quicksand"', 'sans-serif'],
+                        display: ['"Quicksand"', '"Plus Jakarta Sans"', 'sans-serif'],
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        amarama: {
+                            sage: '#A6C478',       /* Verde Salvia - Logo AMARAMA */
+                            lime: '#8DC351',       /* Verde Lima Fresco - Acciones y vitalidad */
+                            lavender: '#98A9D4',   /* Azul Lavanda - Subtítulo POSADA */
+                            pure: '#FFFFFF',       /* Blanco Puro - Medallón y tarjetas */
+                            orchid: '#C868B6',     /* Magenta Orquídea - Amor / Bienestar */
+                            indigo: '#6B68C1',     /* Índigo Violáceo - Paz / Espiritualidad */
+                            coral: '#E27D60',      /* Coral Terracota - Alertas suaves / Resta */
+                            gold: '#F3C15A',       /* Amarillo Dorado - Fe / Luz */
+                            cream: '#FBF9F5',      /* Crema muy limpio luminoso */
+                            sand: '#F5F0E6',       /* Crema arena suave */
+                            border: '#EAE4D7',     /* Borde sutil cálido */
+                            charcoal: '#363430',   /* Texto principal legible */
+                            muted: '#6E6A63'       /* Texto secundario */
+                        }
+                    },
+                    boxShadow: {
+                        'medallion': '0 14px 38px -8px rgba(107, 104, 193, 0.10), 0 4px 16px -2px rgba(54, 52, 48, 0.05)',
+                        'soft': '0 10px 35px -10px rgba(54, 52, 48, 0.07)',
+                        'card': '0 4px 20px -2px rgba(54, 52, 48, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #FBF9F5;
+            color: #363430;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Fondo crema limpio con halo de luz acuarela ultra sutil */
+        .bg-amarama-clean {
+            background-color: #FBF9F5;
+            background-image:
+                radial-gradient(circle at 12% 10%, rgba(243, 193, 90, 0.22) 0%, transparent 42%),
+                radial-gradient(circle at 88% 12%, rgba(152, 169, 212, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 82% 72%, rgba(200, 104, 182, 0.14) 0%, transparent 44%),
+                radial-gradient(circle at 20% 78%, rgba(141, 195, 81, 0.18) 0%, transparent 46%),
+                linear-gradient(155deg, rgba(166, 196, 120, 0.08) 0%, rgba(251, 249, 245, 0.92) 45%, rgba(107, 104, 193, 0.09) 100%);
+            background-attachment: fixed;
+        }
+
+        /* Personalización de scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F5F0E6;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4CCB9;
+            border-radius: 9999px;
+        }
+
+        /* Animaciones suaves */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up {
+            animation: fadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Estilos de impresión para el cartel QR */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-qr-card, #printable-qr-card * {
+                visibility: visible;
+            }
+            #printable-qr-card {
+                position: fixed;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+                max-width: 420px;
+                box-shadow: none !important;
+                border: 2px solid #A6C478 !important;
+            }
+        }
+    </style>
+</head>
+<body class="font-sans bg-amarama-clean min-h-screen flex flex-col antialiased selection:bg-amarama-sage selection:text-white">
+
+    <!-- Notificación Toast Flotante -->
+    <div id="toast-container" class="fixed bottom-5 right-5 left-5 sm:left-auto sm:w-96 z-50 pointer-events-none flex flex-col gap-2"></div>
+
+    <!-- Barra Superior Minimalista sobre Crema Limpio -->
+    <nav class="w-full bg-amarama-cream/85 text-amarama-charcoal border-b border-amarama-border/80 sticky top-0 z-30 backdrop-blur-md">
+        <div class="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs font-medium tracking-wide text-amarama-muted">
+                <!-- Pequeño isotipo flor de loto multicolor -->
+                <svg class="w-5 h-5 shrink-0" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M32 10C27 21 26 32 32 44C38 32 37 21 32 10Z" fill="#C868B6"/>
+                    <path d="M20 17C19 27 23 37 31 44C30 33 26 24 20 17Z" fill="#6B68C1"/>
+                    <path d="M44 17C45 27 41 37 33 44C34 33 38 24 44 17Z" fill="#E27D60"/>
+                    <path d="M10 28C13 37 21 43 30 46C25 37 18 31 10 28Z" fill="#98A9D4"/>
+                    <path d="M54 28C51 37 43 43 34 46C39 37 46 31 54 28Z" fill="#F3C15A"/>
+                    <path d="M18 48C27 52 37 52 46 48C37 46 27 46 18 48Z" fill="#8DC351"/>
+                </svg>
+                <span class="hidden sm:inline font-display font-semibold text-amarama-charcoal">Check-in Digital</span>
+                <span class="sm:hidden font-display font-semibold text-amarama-charcoal">Check-in</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- Botón QR Recepción -->
+                <button type="button" onclick="openQrModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white hover:bg-amarama-sand text-amarama-charcoal border border-amarama-border shadow-2xs transition active:scale-95">
+                    <i data-lucide="qr-code" class="w-3.5 h-3.5 text-amarama-indigo"></i>
+                    <span>QR Recepción</span>
+                </button>
+
+                <!-- Botón Panel Recepción / Excel -->
+                <button type="button" onclick="openAdminModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amarama-sage/20 hover:bg-amarama-sage/30 text-amarama-charcoal border border-amarama-sage/50 transition shadow-2xs active:scale-95">
+                    <i data-lucide="table-2" class="w-3.5 h-3.5 text-amarama-lime"></i>
+                    <span>Recepción / Excel</span>
+                    <span id="guest-count-badge" class="ml-0.5 px-1.5 py-0.2 text-[10px] rounded-full bg-amarama-lime text-white font-bold">2</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Cabecera Limpia con el Medallón Circular Blanco Oficial de AMARAMA POSADA -->
+    <header class="w-full pt-7 pb-4 sm:pt-10 sm:pb-6 px-4 text-center">
+        <div class="max-w-xl mx-auto flex flex-col items-center">
+            
+            <!-- MEDALLÓN CIRCULAR BLANCO PURO (#FFFFFF) TAL CUAL LA IMAGEN DE REFERENCIA -->
+            <div class="w-56 h-56 sm:w-64 sm:h-64 rounded-full bg-white shadow-medallion border border-amarama-border/60 flex flex-col items-center justify-center px-5 py-4 select-none transition-transform duration-300 hover:scale-[1.01]">
+                
+                <!-- Círculo Acuarela Multicolor con Flor de Loto Blanca -->
+                <svg class="w-24 h-24 sm:w-28 sm:h-28 shrink-0 mb-2.5" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Flor de Loto Amarama Posada">
+                    <defs>
+                        <!-- Degradados acuarela exactos de la paleta oficial -->
+                        <radialGradient id="wcCoralGold" cx="18%" cy="32%" r="62%">
+                            <stop offset="0%" stop-color="#E27D60"/>
+                            <stop offset="48%" stop-color="#F3C15A" stop-opacity="0.9"/>
+                            <stop offset="100%" stop-color="#F3C15A" stop-opacity="0"/>
+                        </radialGradient>
+                        <radialGradient id="wcOrchidTop" cx="48%" cy="14%" r="55%">
+                            <stop offset="0%" stop-color="#C868B6"/>
+                            <stop offset="55%" stop-color="#C868B6" stop-opacity="0.65"/>
+                            <stop offset="100%" stop-color="#C868B6" stop-opacity="0"/>
+                        </radialGradient>
+                        <radialGradient id="wcIndigoLavender" cx="84%" cy="32%" r="64%">
+                            <stop offset="0%" stop-color="#6B68C1"/>
+                            <stop offset="55%" stop-color="#98A9D4" stop-opacity="0.85"/>
+                            <stop offset="100%" stop-color="#98A9D4" stop-opacity="0"/>
+                        </radialGradient>
+                        <radialGradient id="wcSageLime" cx="50%" cy="88%" r="65%">
+                            <stop offset="0%" stop-color="#8DC351"/>
+                            <stop offset="58%" stop-color="#A6C478" stop-opacity="0.9"/>
+                            <stop offset="100%" stop-color="#A6C478" stop-opacity="0"/>
+                        </radialGradient>
+                        <clipPath id="lotusMedallionClip">
+                            <circle cx="60" cy="60" r="56"/>
+                        </clipPath>
+                    </defs>
+
+                    <!-- Fondo circular acuarela -->
+                    <g clip-path="url(#lotusMedallionClip)">
+                        <circle cx="60" cy="60" r="56" fill="#E8ECF7"/>
+                        <circle cx="60" cy="60" r="56" fill="url(#wcCoralGold)"/>
+                        <circle cx="60" cy="60" r="56" fill="url(#wcOrchidTop)"/>
+                        <circle cx="60" cy="60" r="56" fill="url(#wcIndigoLavender)"/>
+                        <circle cx="60" cy="60" r="56" fill="url(#wcSageLime)"/>
+                        <!-- Destello luminoso detrás del loto -->
+                        <circle cx="60" cy="56" r="32" fill="#FFFFFF" fill-opacity="0.25"/>
+                    </g>
+
+                    <!-- Flor de Loto Blanca Estilizada -->
+                    <g fill="#FFFFFF" fill-opacity="0.97">
+                        <!-- Pétalo central -->
+                        <path d="M60 20C53 35 51 52 60 69C69 52 67 35 60 20Z"/>
+                        <!-- Pétalos interiores -->
+                        <path d="M42 30C40 45 46 60 58 70C57 54 51 40 42 30Z" fill-opacity="0.94"/>
+                        <path d="M78 30C80 45 74 60 62 70C63 54 69 40 78 30Z" fill-opacity="0.94"/>
+                        <!-- Pétalos medios -->
+                        <path d="M26 45C30 60 42 69 57 73C49 60 39 50 26 45Z" fill-opacity="0.9"/>
+                        <path d="M94 45C90 60 78 69 63 73C71 60 81 50 94 45Z" fill-opacity="0.9"/>
+                        <!-- Pétalos exteriores -->
+                        <path d="M17 62C26 72 41 76 56 76C45 68 32 63 17 62Z" fill-opacity="0.86"/>
+                        <path d="M103 62C94 72 79 76 64 76C75 68 88 63 103 62Z" fill-opacity="0.86"/>
+                        <!-- Base del loto -->
+                        <path d="M45 79C55 84 65 84 75 79C65 77 55 77 45 79Z" fill-opacity="0.94"/>
+                    </g>
+                </svg>
+
+                <!-- Tipografía AMARAMA en Verde Salvia (#A6C478) -->
+                <h1 class="font-brand text-3xl sm:text-[34px] font-bold tracking-[0.05em] text-amarama-sage leading-none">
+                    AMARAMA
+                </h1>
+
+                <!-- Subtítulo POSADA en Azul Lavanda (#98A9D4) -->
+                <p class="font-sans text-xs sm:text-[13px] font-medium tracking-[0.34em] text-amarama-lavender uppercase mt-1.5 pl-1">
+                    POSADA
+                </p>
+            </div>
+
+            <!-- Píldoras sutiles Fe · Amor · Paz con los colores de la paleta -->
+            <div class="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs font-display font-bold">
+                <span class="px-3 py-1 rounded-full bg-amarama-gold/15 text-[#B5831D] border border-amarama-gold/35">Fe</span>
+                <span class="text-amarama-muted/40">·</span>
+                <span class="px-3 py-1 rounded-full bg-amarama-orchid/12 text-[#9E3E8C] border border-amarama-orchid/30">Amor</span>
+                <span class="text-amarama-muted/40">·</span>
+                <span class="px-3 py-1 rounded-full bg-amarama-indigo/12 text-amarama-indigo border border-amarama-indigo/30">Paz</span>
+            </div>
+
+            <p class="mt-2.5 text-xs sm:text-sm text-amarama-muted italic font-display max-w-md mx-auto">
+                “Que el camino que escojas te lleve siempre a la felicidad”
+            </p>
+        </div>
+    </header>
+
+    <!-- Barra de Estado de Sincronización -->
+    <div class="max-w-2xl mx-auto px-4 pt-1 text-center">
+        <div id="sheets-status-pill" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-amarama-border text-xs text-amarama-muted shadow-2xs">
+            <span id="sheets-status-dot" class="w-2 h-2 rounded-full bg-amarama-gold"></span>
+            <span id="sheets-status-text">Modo Local Activo (Listo para vincular Google Sheets)</span>
+        </div>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <main class="flex-1 w-full max-w-2xl mx-auto px-4 pt-5 pb-16">
+
+        <!-- VISTA 1: FORMULARIO DE CHECK-IN (EXACTO A LA FICHA FÍSICA DE AMARAMA) -->
+        <form id="checkin-form" class="space-y-6 animate-fade-up" novalidate>
+
+            <!-- SECCIÓN 1: DATOS DEL HUÉSPED -->
+            <section class="bg-white rounded-3xl p-5 sm:p-7 shadow-card border border-amarama-border">
+                <div class="flex items-center gap-3 pb-4 mb-5 border-b border-amarama-sand">
+                    <div class="w-10 h-10 rounded-2xl bg-amarama-sage/15 text-[#6D8F3B] flex items-center justify-center shrink-0">
+                        <i data-lucide="user-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-display text-lg sm:text-xl font-bold text-amarama-charcoal">1. Ficha del Huésped</h2>
+                        <p class="text-xs text-amarama-muted">Completa tus datos de llegada para darte la bienvenida</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- 1. NOMBRE Y APELLIDO -->
+                    <div class="sm:col-span-2">
+                        <label for="fullName" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Nombre y Apellido <span class="text-amarama-coral">*</span>
+                        </label>
+                        <input type="text" id="fullName" name="fullName" required placeholder="Ej. Camila Valentina Mendoza"
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal placeholder:text-amarama-muted/45 focus:outline-none focus:ring-2 focus:ring-amarama-sage/35 focus:border-amarama-sage transition text-sm">
+                    </div>
+
+                    <!-- 2. C.I. / PASAPORTE -->
+                    <div>
+                        <label for="docNumber" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            C.I. / Pasaporte <span class="text-amarama-coral">*</span>
+                        </label>
+                        <div class="flex rounded-xl overflow-hidden border border-amarama-border bg-amarama-cream focus-within:ring-2 focus-within:ring-amarama-sage/35 focus-within:border-amarama-sage transition">
+                            <select id="docType" name="docType" aria-label="Tipo de documento"
+                                class="bg-amarama-sand px-3 py-3 text-sm font-bold text-amarama-charcoal border-r border-amarama-border focus:outline-none">
+                                <option value="V-">V-</option>
+                                <option value="E-">E-</option>
+                                <option value="P-">P-</option>
+                            </select>
+                            <input type="text" id="docNumber" name="docNumber" required placeholder="18.452.910"
+                                class="w-full px-3.5 py-3 bg-transparent text-sm text-amarama-charcoal placeholder:text-amarama-muted/45 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- 3. TLF (Teléfono / WhatsApp) -->
+                    <div>
+                        <label for="phone" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Tlf (Teléfono / WhatsApp) <span class="text-amarama-coral">*</span>
+                        </label>
+                        <input type="tel" id="phone" name="phone" required placeholder="+58 412 555 0192"
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal placeholder:text-amarama-muted/45 focus:outline-none focus:ring-2 focus:ring-amarama-sage/35 focus:border-amarama-sage transition text-sm">
+                    </div>
+
+                    <!-- 4. MAIL -->
+                    <div>
+                        <label for="email" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Mail (Correo Electrónico) <span class="text-amarama-coral">*</span>
+                        </label>
+                        <input type="email" id="email" name="email" required placeholder="camila@ejemplo.com"
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal placeholder:text-amarama-muted/45 focus:outline-none focus:ring-2 focus:ring-amarama-sage/35 focus:border-amarama-sage transition text-sm">
+                    </div>
+
+                    <!-- 5. DIRECCIÓN -->
+                    <div>
+                        <label for="address" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Dirección / Procedencia <span class="text-amarama-coral">*</span>
+                        </label>
+                        <input type="text" id="address" name="address" required placeholder="Ej. Valencia, Carabobo"
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal placeholder:text-amarama-muted/45 focus:outline-none focus:ring-2 focus:ring-amarama-sage/35 focus:border-amarama-sage transition text-sm">
+                    </div>
+
+                    <!-- 6. MODELO VEHÍCULO -->
+                    <div class="sm:col-span-2">
+                        <label for="vehicle" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Modelo Vehículo <span class="text-amarama-muted font-normal normal-case">(y placa opcional)</span>
+                        </label>
+                        <input type="text" id="vehicle" name="vehicle" placeholder="Ej. Toyota Fortuner Gris • Placa AB123CD (o dejar vacío si viene sin vehículo)"
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal placeholder:text-amarama-muted/45 focus:outline-none focus:ring-2 focus:ring-amarama-sage/35 focus:border-amarama-sage transition text-sm">
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 2: DETALLES DE LA ESTADÍA (F.I., F.S., HAB, PLAN, ADULTOS, NIÑOS) -->
+            <section class="bg-white rounded-3xl p-5 sm:p-7 shadow-card border border-amarama-border">
+                <div class="flex items-center gap-3 pb-4 mb-5 border-b border-amarama-sand">
+                    <div class="w-10 h-10 rounded-2xl bg-amarama-lavender/20 text-amarama-indigo flex items-center justify-center shrink-0">
+                        <i data-lucide="calendar-heart" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-display text-lg sm:text-xl font-bold text-amarama-charcoal">2. Datos de tu Estadía</h2>
+                        <p class="text-xs text-amarama-muted">Fechas de ingreso/salida, habitación y plan contratado</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- 7. F.I. (Fecha de Ingreso) -->
+                    <div>
+                        <label for="checkInDate" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            F.I. (Fecha de Ingreso) <span class="text-amarama-coral">*</span>
+                        </label>
+                        <input type="date" id="checkInDate" name="checkInDate" required
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal focus:outline-none focus:ring-2 focus:ring-amarama-lavender/40 focus:border-amarama-indigo transition text-sm">
+                    </div>
+
+                    <!-- 8. F.S. (Fecha de Salida) -->
+                    <div>
+                        <label for="checkOutDate" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            F.S. (Fecha de Salida) <span class="text-amarama-coral">*</span>
+                        </label>
+                        <input type="date" id="checkOutDate" name="checkOutDate" required
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal focus:outline-none focus:ring-2 focus:ring-amarama-lavender/40 focus:border-amarama-indigo transition text-sm">
+                    </div>
+
+                    <!-- 9. HAB (Habitación) -->
+                    <div>
+                        <label for="room" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Hab (Habitación) <span class="text-amarama-coral">*</span>
+                        </label>
+                        <input type="text" id="room" name="room" list="room-suggestions" required placeholder="Ej. Habitación 1 / Cabaña"
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal placeholder:text-amarama-muted/45 focus:outline-none focus:ring-2 focus:ring-amarama-lavender/40 focus:border-amarama-indigo transition text-sm">
+                        <datalist id="room-suggestions">
+                            <option value="Habitación 1">
+                            <option value="Habitación 2">
+                            <option value="Habitación 3">
+                            <option value="Habitación 4">
+                            <option value="Habitación 5">
+                            <option value="Suite Amarama">
+                            <option value="Cabaña El Bosque">
+                            <option value="Por asignar en recepción">
+                        </datalist>
+                    </div>
+
+                    <!-- 10. PLAN -->
+                    <div>
+                        <label for="plan" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Plan <span class="text-amarama-coral">*</span>
+                        </label>
+                        <select id="plan" name="plan" required
+                            class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal focus:outline-none focus:ring-2 focus:ring-amarama-lavender/40 focus:border-amarama-indigo transition text-sm">
+                            <option value="Con Desayuno">Con Desayuno</option>
+                            <option value="Full Pensión (Todas las comidas)">Full Pensión (Todas las comidas)</option>
+                            <option value="Solo Alojamiento">Solo Alojamiento</option>
+                            <option value="Day Pass / Full Day">Day Pass / Full Day</option>
+                            <option value="Plan Romántico / Bienestar">Plan Romántico / Bienestar</option>
+                            <option value="Retiro / Evento Especial">Retiro / Evento Especial</option>
+                        </select>
+                    </div>
+
+                    <!-- 11. ADULTOS -->
+                    <div>
+                        <label for="adults" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Adultos
+                        </label>
+                        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            <button type="button" onclick="adjustCounter('adults', -1, 1)" class="w-9 h-9 rounded-lg bg-white hover:bg-amarama-sand border border-amarama-border/70 text-amarama-charcoal font-bold flex items-center justify-center transition">−</button>
+                            <input type="number" id="adults" name="adults" value="2" min="1" max="15" readonly class="w-12 text-center bg-transparent font-bold text-amarama-charcoal text-base focus:outline-none">
+                            <button type="button" onclick="adjustCounter('adults', 1, 1)" class="w-9 h-9 rounded-lg bg-white hover:bg-amarama-sand border border-amarama-border/70 text-amarama-charcoal font-bold flex items-center justify-center transition">+</button>
+                        </div>
+                    </div>
+
+                    <!-- 12. NIÑOS -->
+                    <div>
+                        <label for="children" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                            Niños
+                        </label>
+                        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            <button type="button" onclick="adjustCounter('children', -1, 0)" class="w-9 h-9 rounded-lg bg-white hover:bg-amarama-sand border border-amarama-border/70 text-amarama-charcoal font-bold flex items-center justify-center transition">−</button>
+                            <input type="number" id="children" name="children" value="0" min="0" max="15" readonly class="w-12 text-center bg-transparent font-bold text-amarama-charcoal text-base focus:outline-none">
+                            <button type="button" onclick="adjustCounter('children', 1, 0)" class="w-9 h-9 rounded-lg bg-white hover:bg-amarama-sand border border-amarama-border/70 text-amarama-charcoal font-bold flex items-center justify-center transition">+</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 3 (FIJA Y SIEMPRE VISIBLE): CONTROL DE RECEPCIÓN, PAGOS Y SERVICIOS HOLÍSTICOS -->
+            <section class="bg-white rounded-3xl p-5 sm:p-7 shadow-card border border-amarama-border">
+                <div class="flex items-center gap-3 pb-4 mb-5 border-b border-amarama-sand">
+                    <div class="w-10 h-10 rounded-2xl bg-amarama-gold/20 text-[#B5831D] flex items-center justify-center shrink-0">
+                        <i data-lucide="receipt" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h2 class="font-display text-lg sm:text-xl font-bold text-amarama-charcoal">3. Control de Recepción y Terapias</h2>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amarama-sand text-amarama-muted">Liquidación y Servicios</span>
+                        </div>
+                        <p class="text-xs text-amarama-muted">Total Plan, Abono, Resta, Masaje, B. Sonido, Aqua, I. Hielo, Extra, Total General y Ref</p>
+                    </div>
+                </div>
+
+                <div class="space-y-5">
+                    <!-- Fila Alojamiento: Total Plan, Abono, Resta -->
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-[#6D8F3B] mb-2.5">Liquidación de Alojamiento / Plan ($)</p>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label for="totalPlan" class="block text-xs font-semibold text-amarama-charcoal mb-1">Total ($)</label>
+                                <input type="number" step="0.01" min="0" id="totalPlan" name="totalPlan" placeholder="0.00" oninput="recalculateFormTotals()"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-sm font-semibold text-amarama-charcoal focus:outline-none focus:border-amarama-sage">
+                            </div>
+                            <div>
+                                <label for="abono" class="block text-xs font-semibold text-amarama-charcoal mb-1">Abono ($)</label>
+                                <input type="number" step="0.01" min="0" id="abono" name="abono" placeholder="0.00" oninput="recalculateFormTotals()"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-sm font-semibold text-[#5E9428] focus:outline-none focus:border-amarama-lime">
+                            </div>
+                            <div>
+                                <label for="resta" class="block text-xs font-semibold text-amarama-charcoal mb-1">Resta ($)</label>
+                                <input type="number" step="0.01" id="resta" name="resta" placeholder="0.00"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-amarama-coral/10 border border-amarama-coral/30 text-sm font-bold text-amarama-coral focus:outline-none focus:border-amarama-coral">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila Servicios Holísticos: MASAJE, B.SONIDO, AQUA, I.HIELO, EXTRA -->
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-amarama-orchid mb-2.5">Servicios de Bienestar y Extras ($)</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            <div>
+                                <label for="masaje" class="block text-xs font-semibold text-amarama-charcoal mb-1">Masaje</label>
+                                <input type="number" step="0.01" min="0" id="masaje" name="masaje" placeholder="0.00" oninput="recalculateFormTotals()"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-sm text-amarama-charcoal focus:outline-none focus:border-amarama-orchid">
+                            </div>
+                            <div>
+                                <label for="bSonido" class="block text-xs font-semibold text-amarama-charcoal mb-1">B. Sonido</label>
+                                <input type="number" step="0.01" min="0" id="bSonido" name="bSonido" placeholder="0.00" oninput="recalculateFormTotals()"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-sm text-amarama-charcoal focus:outline-none focus:border-amarama-indigo">
+                            </div>
+                            <div>
+                                <label for="aqua" class="block text-xs font-semibold text-amarama-charcoal mb-1">Aqua</label>
+                                <input type="number" step="0.01" min="0" id="aqua" name="aqua" placeholder="0.00" oninput="recalculateFormTotals()"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-sm text-amarama-charcoal focus:outline-none focus:border-amarama-lavender">
+                            </div>
+                            <div>
+                                <label for="iHielo" class="block text-xs font-semibold text-amarama-charcoal mb-1">I. Hielo</label>
+                                <input type="number" step="0.01" min="0" id="iHielo" name="iHielo" placeholder="0.00" oninput="recalculateFormTotals()"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-sm text-amarama-charcoal focus:outline-none focus:border-amarama-indigo">
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <label for="extra" class="block text-xs font-semibold text-amarama-charcoal mb-1">Extra</label>
+                                <input type="number" step="0.01" min="0" id="extra" name="extra" placeholder="0.00" oninput="recalculateFormTotals()"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-sm text-amarama-charcoal focus:outline-none focus:border-amarama-sage">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total General y Ref -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                            <label for="totalGeneral" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1">Total General ($)</label>
+                            <input type="number" step="0.01" id="totalGeneral" name="totalGeneral" placeholder="0.00"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-amarama-sage/15 border border-amarama-sage/40 text-sm font-bold text-[#5A7B2B] focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="paymentRef" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1">Ref (Referencia / Pago)</label>
+                            <input type="text" id="paymentRef" name="paymentRef" placeholder="Ej. Zelle #84920 / Efectivo"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-sm text-amarama-charcoal focus:outline-none focus:border-amarama-sage">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 4: OBSERVACIONES / NOTA Y ACEPTACIÓN -->
+            <section class="bg-white rounded-3xl p-5 sm:p-7 shadow-card border border-amarama-border">
+                <div class="flex items-center gap-3 pb-4 mb-5 border-b border-amarama-sand">
+                    <div class="w-10 h-10 rounded-2xl bg-amarama-orchid/15 text-amarama-orchid flex items-center justify-center shrink-0">
+                        <i data-lucide="notebook-pen" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-display text-lg sm:text-xl font-bold text-amarama-charcoal">Observaciones / Nota</h2>
+                        <p class="text-xs text-amarama-muted">Escribe una nota libre para recepción</p>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- Campo simple para escribir una nota libre -->
+                    <label for="notes" class="block text-xs font-bold uppercase tracking-wider text-amarama-charcoal mb-1.5">
+                        Observaciones / Nota <span class="text-amarama-muted font-normal normal-case">(Opcional)</span>
+                    </label>
+                    <textarea id="notes" name="notes" rows="3" placeholder="Escribe aquí una nota o comentario..."
+                        class="w-full px-4 py-3 rounded-xl bg-amarama-cream border border-amarama-border text-amarama-charcoal placeholder:text-amarama-muted/45 focus:outline-none focus:ring-2 focus:ring-amarama-sage/35 focus:border-amarama-sage transition text-sm resize-none"></textarea>
+                </div>
+            </section>
+
+            <!-- BOTÓN DE ENVÍO -->
+            <div class="pt-1">
+                <button type="submit" id="submit-btn"
+                    class="w-full py-4 px-6 rounded-2xl bg-amarama-lime hover:bg-[#7eb443] text-white font-display font-bold text-base shadow-soft transition-all flex items-center justify-center gap-2.5 active:scale-[0.99]">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                    <span>Completar Registro de Llegada</span>
+                </button>
+                <p class="text-center text-[11px] text-amarama-muted mt-3 flex items-center justify-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amarama-sage"></i>
+                    Registro digital ecológico • Sincronizado con recepción
+                </p>
+            </div>
+        </form>
+
+        <!-- VISTA 2: PANTALLA DE BIENVENIDA POST-CHECK-IN -->
+        <section id="welcome-screen" class="hidden animate-fade-up">
+            <div class="bg-white rounded-3xl p-6 sm:p-9 shadow-soft border border-amarama-border text-center relative overflow-hidden">
+                <!-- Barra acuarela superior con la paleta exacta -->
+                <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amarama-gold via-amarama-orchid via-amarama-indigo to-amarama-lime"></div>
+
+                <!-- Medallón de Bienvenida -->
+                <div class="mx-auto w-24 h-24 rounded-full bg-amarama-cream border border-amarama-border/70 shadow-sm mb-4 flex items-center justify-center">
+                    <svg class="w-16 h-16" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g clip-path="url(#lotusMedallionClip)">
+                            <circle cx="60" cy="60" r="56" fill="#E8ECF7"/>
+                            <circle cx="60" cy="60" r="56" fill="url(#wcCoralGold)"/>
+                            <circle cx="60" cy="60" r="56" fill="url(#wcOrchidTop)"/>
+                            <circle cx="60" cy="60" r="56" fill="url(#wcIndigoLavender)"/>
+                            <circle cx="60" cy="60" r="56" fill="url(#wcSageLime)"/>
+                        </g>
+                        <g fill="#FFFFFF" fill-opacity="0.97">
+                            <path d="M60 20C53 35 51 52 60 69C69 52 67 35 60 20Z"/>
+                            <path d="M42 30C40 45 46 60 58 70C57 54 51 40 42 30Z" fill-opacity="0.94"/>
+                            <path d="M78 30C80 45 74 60 62 70C63 54 69 40 78 30Z" fill-opacity="0.94"/>
+                            <path d="M26 45C30 60 42 69 57 73C49 60 39 50 26 45Z" fill-opacity="0.9"/>
+                            <path d="M94 45C90 60 78 69 63 73C71 60 81 50 94 45Z" fill-opacity="0.9"/>
+                            <path d="M17 62C26 72 41 76 56 76C45 68 32 63 17 62Z" fill-opacity="0.86"/>
+                            <path d="M103 62C94 72 79 76 64 76C75 68 88 63 103 62Z" fill-opacity="0.86"/>
+                            <path d="M45 79C55 84 65 84 75 79C65 77 55 77 45 79Z" fill-opacity="0.94"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <p class="text-xs uppercase tracking-[0.22em] text-amarama-sage font-bold">Check-in Completado</p>
+                <h2 class="font-display text-2xl sm:text-3xl font-bold text-amarama-charcoal mt-1">
+                    ¡Bienvenido a Amarama Posada, <span id="welcome-guest-name" class="text-amarama-lime">Huésped</span>!
+                </h2>
+                <p class="text-sm sm:text-base text-amarama-muted mt-2 max-w-md mx-auto font-display font-medium">
+                    Que tu estadía esté llena de <span class="text-[#B5831D] font-bold">Fe</span>, <span class="text-amarama-orchid font-bold">Amor</span> y <span class="text-amarama-indigo font-bold">Paz</span>.
+                </p>
+
+                <!-- Estado de sincronización con Google Sheets -->
+                <div id="sync-feedback-banner" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold bg-amarama-cream border border-amarama-border text-amarama-charcoal">
+                    <i data-lucide="check" class="w-4 h-4 text-amarama-lime"></i>
+                    <span id="sync-feedback-text">Guardado en el libro de recepción</span>
+                </div>
+
+                <!-- Tarjeta Resumen de Estadía & Wi-Fi -->
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-left">
+                    <div class="p-4 rounded-2xl bg-amarama-cream border border-amarama-border">
+                        <span class="text-[11px] uppercase tracking-wider text-amarama-muted font-bold">Tu Estadía</span>
+                        <p id="summary-room" class="font-display text-lg font-bold text-amarama-charcoal mt-0.5">Habitación 1</p>
+                        <p id="summary-plan" class="text-xs font-semibold text-[#6D8F3B] mt-0.5">Plan: Con Desayuno</p>
+                        <p id="summary-dates" class="text-xs text-amarama-muted mt-1">F.I.: Hoy • F.S.: Mañana</p>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-amarama-indigo/10 border border-amarama-indigo/25 text-amarama-charcoal relative">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] uppercase tracking-wider text-amarama-indigo font-bold flex items-center gap-1">
+                                <i data-lucide="wifi" class="w-3.5 h-3.5"></i> Wi-Fi de la Posada
+                            </span>
+                            <button type="button" onclick="copyWifiPassword()" class="text-[11px] px-2.5 py-1 rounded-lg bg-white hover:bg-amarama-cream text-amarama-indigo border border-amarama-indigo/20 transition flex items-center gap-1 font-semibold shadow-2xs">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copiar
+                            </button>
+                        </div>
+                        <p class="text-sm font-medium mt-2">Red: <span class="font-bold text-amarama-charcoal">Posada_Amarama</span></p>
+                        <p class="text-xs text-amarama-muted mt-0.5">Clave: <span id="wifi-pass" class="font-mono font-bold text-amarama-indigo">FeAmorPaz</span></p>
+                    </div>
+                </div>
+
+                <!-- Información útil rápida -->
+                <div class="mt-4 p-4 rounded-2xl bg-amarama-cream border border-amarama-border/80 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amarama-muted">
+                    <div class="flex items-center gap-2.5">
+                        <i data-lucide="sun" class="w-4 h-4 text-amarama-gold shrink-0"></i>
+                        <span><strong>Desayuno:</strong> 8:00 a.m. – 10:30 a.m. en el área social.</span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <i data-lucide="clock" class="w-4 h-4 text-amarama-sage shrink-0"></i>
+                        <span><strong>Check-out:</strong> 12:00 m.</span>
+                    </div>
+                </div>
+
+                <!-- Acciones posteriores -->
+                <div class="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
+                    <button type="button" onclick="registerCompanion()" class="px-5 py-3.5 rounded-xl bg-amarama-lime hover:bg-[#7eb443] text-white text-sm font-display font-bold transition flex items-center justify-center gap-2 shadow-2xs">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>Registrar Acompañante</span>
+                    </button>
+                    <button type="button" onclick="resetFormForNewGuest()" class="px-5 py-3.5 rounded-xl bg-amarama-cream hover:bg-amarama-sand border border-amarama-border text-amarama-charcoal text-sm font-display font-bold transition flex items-center justify-center gap-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>Nuevo Registro</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Limpio -->
+    <footer class="py-6 px-4 text-center text-xs text-amarama-muted border-t border-amarama-border bg-white/60">
+        <p class="font-brand text-base text-amarama-sage font-bold tracking-wider">AMARAMA <span class="font-sans text-xs font-medium tracking-[0.25em] text-amarama-lavender">POSADA</span></p>
+        <p class="mt-1">Fe · Amor · Paz — Naturaleza &amp; Bienestar</p>
+    </footer>
+
+    <!-- =====================================================================
+         MODAL 1: PANEL DE RECEPCIÓN, EDICIÓN DE CONSUMOS & GOOGLE SHEETS
+    ====================================================================== -->
+    <div id="admin-modal" class="fixed inset-0 z-50 hidden bg-amarama-charcoal/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+        <div class="bg-amarama-cream w-full max-w-6xl rounded-3xl shadow-2xl border border-amarama-border overflow-hidden my-auto max-h-[94vh] flex flex-col">
+            
+            <!-- Header del Modal Limpio y Luminoso -->
+            <div class="bg-white text-amarama-charcoal px-5 py-4 border-b border-amarama-border flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-amarama-sage/15 text-[#6D8F3B] flex items-center justify-center">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display text-lg font-bold text-amarama-charcoal leading-tight">Panel de Recepción &amp; Google Sheets</h3>
+                        <p class="text-[11px] text-amarama-muted">Control de huéspedes, liquidación de planes, terapias y exportación a Excel</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeModal('admin-modal')" class="p-2 rounded-full hover:bg-amarama-sand text-amarama-muted transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Pestañas de Navegación del Panel -->
+            <div class="flex border-b border-amarama-border bg-amarama-sand/70 px-4 pt-2 gap-2 shrink-0">
+                <button type="button" id="tab-btn-guests" onclick="switchAdminTab('guests')" class="px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl bg-amarama-cream text-amarama-charcoal border-t border-x border-amarama-border -mb-px transition">
+                    Libro de Registro (<span id="tab-guest-count">2</span>)
+                </button>
+                <button type="button" id="tab-btn-sheets" onclick="switchAdminTab('sheets')" class="px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl text-amarama-muted hover:text-amarama-charcoal transition flex items-center gap-1.5">
+                    <i data-lucide="sheet" class="w-4 h-4 text-amarama-lime"></i>
+                    <span>Conectar Google Sheets (24 Columnas)</span>
+                </button>
+            </div>
+
+            <!-- Contenido Scrolleable del Modal -->
+            <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-5">
+                
+                <!-- PESTAÑA A: TABLA COMPLETA DE HUÉSPEDES + EDICIÓN DE MONTOS -->
+                <div id="admin-tab-guests" class="space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-amarama-border">
+                        <div>
+                            <h4 class="font-display font-bold text-sm text-amarama-charcoal">Ficha Completa de Huéspedes y Consumos</h4>
+                            <p class="text-xs text-amarama-muted">Haz clic en <strong>"Editar / Cargar"</strong> en cualquier fila para completar Plan, Abono, Resta, Masaje, B. Sonido, Aqua, I. Hielo o Extra.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                            <button type="button" onclick="exportToCSV()" class="px-4 py-2.5 rounded-xl bg-amarama-lime hover:bg-[#7eb443] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                                <span>Descargar Excel / CSV</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cajón de Edición Rápida de Consumos y Liquidación -->
+                    <div id="edit-guest-drawer" class="hidden bg-white p-5 rounded-2xl border-2 border-amarama-sage shadow-soft space-y-4 animate-fade-up">
+                        <div class="flex items-center justify-between border-b border-amarama-sand pb-3">
+                            <div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-[#6D8F3B]">Editando Ficha de Recepción</span>
+                                <h5 id="edit-guest-title" class="font-display text-base font-bold text-amarama-charcoal">Huésped</h5>
+                            </div>
+                            <button type="button" onclick="closeEditDrawer()" class="text-xs text-amarama-muted hover:text-amarama-charcoal font-semibold">Cerrar ✕</button>
+                        </div>
+
+                        <input type="hidden" id="edit-guest-id">
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Habitación (Hab)</label>
+                                <input type="text" id="edit-room" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Plan</label>
+                                <input type="text" id="edit-plan" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Total Plan ($)</label>
+                                <input type="number" step="0.01" id="edit-totalPlan" oninput="recalcEditModal()" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border font-semibold">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Abono ($)</label>
+                                <input type="number" step="0.01" id="edit-abono" oninput="recalcEditModal()" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border font-semibold text-[#5E9428]">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Resta ($)</label>
+                                <input type="number" step="0.01" id="edit-resta" class="w-full px-3 py-2 rounded-xl bg-amarama-coral/10 font-bold text-amarama-coral border border-amarama-coral/30">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Masaje ($)</label>
+                                <input type="number" step="0.01" id="edit-masaje" oninput="recalcEditModal()" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">B. Sonido ($)</label>
+                                <input type="number" step="0.01" id="edit-bSonido" oninput="recalcEditModal()" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Aqua ($)</label>
+                                <input type="number" step="0.01" id="edit-aqua" oninput="recalcEditModal()" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">I. Hielo ($)</label>
+                                <input type="number" step="0.01" id="edit-iHielo" oninput="recalcEditModal()" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Extra ($)</label>
+                                <input type="number" step="0.01" id="edit-extra" oninput="recalcEditModal()" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#6D8F3B] mb-1">Total General ($)</label>
+                                <input type="number" step="0.01" id="edit-totalGeneral" class="w-full px-3 py-2 rounded-xl bg-amarama-sage/15 border border-amarama-sage/40 font-bold text-[#5A7B2B]">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-amarama-charcoal mb-1">Ref (Comprobante)</label>
+                                <input type="text" id="edit-paymentRef" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                            <div class="col-span-2 sm:col-span-4">
+                                <label class="block font-bold text-amarama-charcoal mb-1">Observaciones / Notas</label>
+                                <input type="text" id="edit-notes" class="w-full px-3 py-2 rounded-xl bg-amarama-cream border border-amarama-border">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap justify-end gap-2 pt-2">
+                            <button type="button" onclick="saveGuestEdits(false)" class="px-4 py-2 rounded-xl bg-amarama-sand hover:bg-amarama-border text-amarama-charcoal text-xs font-bold transition">
+                                Guardar Cambios Locales
+                            </button>
+                            <button type="button" onclick="saveGuestEdits(true)" class="px-4 py-2 rounded-xl bg-amarama-lime hover:bg-[#7eb443] text-white text-xs font-bold transition flex items-center gap-1.5">
+                                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                <span>Guardar y Enviar Fila a Google Sheets</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla Responsive con las 24 columnas de la ficha física -->
+                    <div class="bg-white rounded-2xl border border-amarama-border overflow-hidden shadow-2xs">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead>
+                                    <tr class="bg-amarama-sand text-amarama-charcoal text-[10px] uppercase tracking-wider border-b border-amarama-border">
+                                        <th class="py-3 px-3 font-bold sticky left-0 bg-amarama-sand z-10">Acción</th>
+                                        <th class="py-3 px-3 font-bold">Fecha Reg.</th>
+                                        <th class="py-3 px-3 font-bold">Nombre y Apellido</th>
+                                        <th class="py-3 px-3 font-bold">C.I.</th>
+                                        <th class="py-3 px-3 font-bold">Dirección</th>
+                                        <th class="py-3 px-3 font-bold">Mail</th>
+                                        <th class="py-3 px-3 font-bold">Tlf</th>
+                                        <th class="py-3 px-3 font-bold">Modelo Vehículo</th>
+                                        <th class="py-3 px-3 font-bold">F.I.</th>
+                                        <th class="py-3 px-3 font-bold">F.S.</th>
+                                        <th class="py-3 px-3 font-bold">Hab</th>
+                                        <th class="py-3 px-3 font-bold">Plan</th>
+                                        <th class="py-3 px-3 font-bold">Adultos</th>
+                                        <th class="py-3 px-3 font-bold">Niños</th>
+                                        <th class="py-3 px-3 font-bold">Total Plan</th>
+                                        <th class="py-3 px-3 font-bold">Abono</th>
+                                        <th class="py-3 px-3 font-bold">Resta</th>
+                                        <th class="py-3 px-3 font-bold">Masaje</th>
+                                        <th class="py-3 px-3 font-bold">B. Sonido</th>
+                                        <th class="py-3 px-3 font-bold">Aqua</th>
+                                        <th class="py-3 px-3 font-bold">I. Hielo</th>
+                                        <th class="py-3 px-3 font-bold">Extra</th>
+                                        <th class="py-3 px-3 font-bold">Total Gral.</th>
+                                        <th class="py-3 px-3 font-bold">Ref</th>
+                                        <th class="py-3 px-3 font-bold">Notas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guests-table-body" class="divide-y divide-amarama-sand text-xs text-amarama-charcoal">
+                                    <!-- Se llena dinámicamente por JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA B: CONFIGURACIÓN GOOGLE SHEETS (APPS SCRIPT CON LAS 23 COLUMNAS) -->
+                <div id="admin-tab-sheets" class="hidden space-y-5">
+                    <div class="bg-white p-5 rounded-2xl border border-amarama-border space-y-3">
+                        <div class="flex items-start gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-amarama-sage/15 text-[#6D8F3B] flex items-center justify-center shrink-0">
+                                <i data-lucide="link" class="w-5 h-5"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-display text-base sm:text-lg font-bold text-amarama-charcoal">1. URL de Google Apps Script</h4>
+                                <p class="text-xs text-amarama-muted mt-0.5">Al guardar esta URL, cada check-in y cada actualización de consumos caerá automáticamente en tu hoja de Google Sheets con las 23 columnas exactas de la ficha de Amarama.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-2 pt-1">
+                            <input type="url" id="webhook-url-input" placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+                                class="flex-1 px-4 py-2.5 rounded-xl bg-amarama-cream border border-amarama-border text-xs text-amarama-charcoal focus:outline-none focus:border-amarama-sage">
+                            <button type="button" onclick="saveWebhookUrl()" class="px-5 py-2.5 rounded-xl bg-amarama-lime hover:bg-[#7eb443] text-white text-xs font-bold transition shrink-0">
+                                Guardar Conexión
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-amarama-border space-y-4">
+                        <h4 class="font-display text-base sm:text-lg font-bold text-amarama-charcoal">2. Script listo para tu Excel de Google (23 Columnas Exactas)</h4>
+                        
+                        <ol class="list-decimal list-inside space-y-1.5 text-xs text-amarama-muted leading-relaxed">
+                            <li>Abre una hoja en <strong class="text-amarama-charcoal">Google Sheets</strong> llamada <em>"Registro Huéspedes - Amarama Posada"</em>.</li>
+                            <li>Ve a <strong class="text-amarama-charcoal">Extensiones &rarr; Apps Script</strong>, borra el contenido y pega este código:</li>
+                        </ol>
+
+                        <div class="relative">
+                            <button type="button" onclick="copyAppsScriptCode()" class="absolute top-2.5 right-2.5 px-3 py-1.5 rounded-lg bg-amarama-lime text-white hover:bg-[#7eb443] text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                <span>Copiar Código</span>
+                            </button>
+                            <pre id="apps-script-code" class="bg-[#2D2C29] text-[#B7D587] p-4 pt-12 sm:pt-4 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed">function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var d = JSON.parse(e.postData.contents);
+  
+  // Crear encabezados exactos de la ficha de Amarama Posada (23 columnas)
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      "Fecha Registro", "Nombre y Apellido", "C.I.", "Dirección",
+      "Mail", "Tlf", "Modelo Vehículo", "F.I.", "F.S.", "Hab",
+      "Plan", "Adultos", "Niños", "Total Plan", "Abono", "Resta",
+      "Masaje", "B. Sonido", "Aqua", "I. Hielo", "Extra",
+      "Total General", "Ref", "Observaciones / Nota"
+    ]);
+  }
+  
+  sheet.appendRow([
+    new Date().toLocaleString("es-VE"),
+    d.fullName || "",
+    (d.docType || "") + (d.docNumber || ""),
+    d.address || "",
+    d.email || "",
+    d.phone || "",
+    d.vehicle || "Sin vehículo",
+    d.checkInDate || "",
+    d.checkOutDate || "",
+    d.room || "",
+    d.plan || "",
+    d.adults || 1,
+    d.children || 0,
+    d.totalPlan || 0,
+    d.abono || 0,
+    d.resta || 0,
+    d.masaje || 0,
+    d.bSonido || 0,
+    d.aqua || 0,
+    d.iHielo || 0,
+    d.extra || 0,
+    d.totalGeneral || 0,
+    d.paymentRef || "",
+    d.notes || ""
+  ]);
+  
+  return ContentService.createTextOutput(JSON.stringify({ status: "ok" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+                        </div>
+
+                        <ol start="3" class="list-decimal list-inside space-y-1.5 text-xs text-amarama-muted leading-relaxed">
+                            <li>Haz clic en <strong class="text-amarama-charcoal">Implementar &rarr; Nueva implementación</strong> &rarr; Tipo: <strong>Aplicación web</strong> &rarr; Acceso: <strong class="text-amarama-charcoal">Cualquier persona</strong>.</li>
+                            <li>Copia la URL generada y pégala arriba para activar el envío automático.</li>
+                        </ol>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: GENERADOR DE CARTEL QR PARA RECEPCIÓN (CON MEDALLÓN OFICIAL)
+    ====================================================================== -->
+    <div id="qr-modal" class="fixed inset-0 z-50 hidden bg-amarama-charcoal/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-amarama-cream w-full max-w-md rounded-3xl shadow-2xl border border-amarama-border overflow-hidden my-auto">
+            <div class="bg-white text-amarama-charcoal px-5 py-4 border-b border-amarama-border flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="qr-code" class="w-5 h-5 text-amarama-indigo"></i>
+                    <h3 class="font-display text-base font-bold text-amarama-charcoal">Cartel QR para Recepción</h3>
+                </div>
+                <button type="button" onclick="closeModal('qr-modal')" class="p-1.5 rounded-full hover:bg-amarama-sand text-amarama-muted transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 flex flex-col items-center">
+                <!-- Tarjeta imprimible limpia sobre fondo crema con medallón oficial -->
+                <div id="printable-qr-card" class="w-full bg-amarama-cream rounded-3xl overflow-hidden border border-amarama-border shadow-soft text-center p-6">
+                    
+                    <!-- Medallón Circular Blanco Oficial -->
+                    <div class="mx-auto w-40 h-40 rounded-full bg-white shadow-medallion border border-amarama-border/60 flex flex-col items-center justify-center px-3 py-2 mb-4">
+                        <svg class="w-16 h-16 mb-1.5" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g clip-path="url(#lotusMedallionClip)">
+                                <circle cx="60" cy="60" r="56" fill="#E8ECF7"/>
+                                <circle cx="60" cy="60" r="56" fill="url(#wcCoralGold)"/>
+                                <circle cx="60" cy="60" r="56" fill="url(#wcOrchidTop)"/>
+                                <circle cx="60" cy="60" r="56" fill="url(#wcIndigoLavender)"/>
+                                <circle cx="60" cy="60" r="56" fill="url(#wcSageLime)"/>
+                            </g>
+                            <g fill="#FFFFFF" fill-opacity="0.97">
+                                <path d="M60 20C53 35 51 52 60 69C69 52 67 35 60 20Z"/>
+                                <path d="M42 30C40 45 46 60 58 70C57 54 51 40 42 30Z" fill-opacity="0.94"/>
+                                <path d="M78 30C80 45 74 60 62 70C63 54 69 40 78 30Z" fill-opacity="0.94"/>
+                                <path d="M26 45C30 60 42 69 57 73C49 60 39 50 26 45Z" fill-opacity="0.9"/>
+                                <path d="M94 45C90 60 78 69 63 73C71 60 81 50 94 45Z" fill-opacity="0.9"/>
+                                <path d="M17 62C26 72 41 76 56 76C45 68 32 63 17 62Z" fill-opacity="0.86"/>
+                                <path d="M103 62C94 72 79 76 64 76C75 68 88 63 103 62Z" fill-opacity="0.86"/>
+                                <path d="M45 79C55 84 65 84 75 79C65 77 55 77 45 79Z" fill-opacity="0.94"/>
+                            </g>
+                        </svg>
+                        <p class="font-brand text-xl font-bold tracking-[0.05em] text-amarama-sage leading-none">AMARAMA</p>
+                        <p class="font-sans text-[9px] font-medium tracking-[0.34em] text-amarama-lavender uppercase mt-1 pl-0.5">POSADA</p>
+                    </div>
+
+                    <h4 class="font-display text-lg font-bold text-amarama-charcoal">Check-in Digital</h4>
+                    <p class="text-xs text-amarama-muted mt-1 max-w-xs mx-auto">Escanea el código QR con tu teléfono para completar tu registro de llegada</p>
+
+                    <div class="my-4 p-4 bg-white rounded-2xl inline-flex items-center justify-center border border-amarama-border shadow-2xs">
+                        <div id="qrcode-container"></div>
+                    </div>
+
+                    <p class="text-[11px] font-display font-bold tracking-widest text-amarama-indigo uppercase">
+                        Fe · Amor · Paz
+                    </p>
+                </div>
+
+                <!-- Personalizar URL del QR -->
+                <div class="w-full mt-4">
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-amarama-muted mb-1">Enlace destino del QR:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="qr-url-input" class="flex-1 px-3 py-2 rounded-xl bg-white border border-amarama-border text-xs text-amarama-charcoal focus:outline-none">
+                        <button type="button" onclick="regenerateQR()" class="px-3 py-2 rounded-xl bg-amarama-sand hover:bg-amarama-border text-amarama-charcoal text-xs font-bold transition">
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="w-full mt-5">
+                    <button type="button" onclick="window.print()" class="w-full py-3.5 px-4 rounded-xl bg-amarama-lime hover:bg-[#7eb443] text-white text-xs font-display font-bold transition flex items-center justify-center gap-2">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        <span>Imprimir Cartel QR</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3: POLÍTICAS DE LA POSADA
+    ====================================================================== -->
+    <div id="policies-modal" class="fixed inset-0 z-50 hidden bg-amarama-charcoal/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-amarama-border overflow-hidden">
+            <div class="bg-amarama-cream text-amarama-charcoal px-5 py-4 border-b border-amarama-border flex items-center justify-between">
+                <h3 class="font-display text-base font-bold text-amarama-charcoal">Normas de Armonía &amp; Estadía</h3>
+                <button type="button" onclick="closeModal('policies-modal')" class="p-1.5 rounded-full hover:bg-amarama-sand text-amarama-muted transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-3 text-xs sm:text-sm text-amarama-muted leading-relaxed max-h-[70vh] overflow-y-auto">
+                <p><strong class="text-amarama-charcoal">1. Horarios:</strong> El Check-in es a partir de las 3:00 p.m. y el Check-out hasta las 12:00 m.</p>
+                <p><strong class="text-amarama-charcoal">2. Espacios de Paz:</strong> Amarama Posada es un espacio natural de descanso y conexión. Agradecemos mantener un volumen suave en jardines y áreas comunes después de las 10:00 p.m.</p>
+                <p><strong class="text-amarama-charcoal">3. Cuidado del Entorno:</strong> No está permitido fumar dentro de las habitaciones ni arrojar desechos en los senderos o jardines.</p>
+                <p><strong class="text-amarama-charcoal">4. Uso de Datos:</strong> Los datos suministrados en esta ficha digital son estrictamente confidenciales y se emplean únicamente para el registro de alojamiento y atención durante su estadía.</p>
+            </div>
+            <div class="px-6 py-4 bg-amarama-cream border-t border-amarama-border flex justify-end">
+                <button type="button" onclick="acceptPoliciesFromModal()" class="px-5 py-2.5 rounded-xl bg-amarama-lime text-white text-xs font-bold hover:bg-[#7eb443] transition">
+                    Entendido, aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         LÓGICA JAVASCRIPT DE LA APLICACIÓN
+    ====================================================================== -->
+    <script>
+        // Claves de almacenamiento local (v2 con las 24 columnas exactas de la hoja de Amarama)
+        const STORAGE_KEY_GUESTS = 'amarama_guests_v2';
+        const STORAGE_KEY_WEBHOOK = 'amarama_sheets_webhook_v2';
+
+        // Registros iniciales de ejemplo adaptados a los campos reales de Amarama
+        const SAMPLE_GUESTS = [
+            {
+                id: 'demo-1',
+                timestamp: 'Hoy, 10:15 a.m.',
+                fullName: 'Alejandro José Villalobos',
+                docType: 'V-',
+                docNumber: '16.842.309',
+                address: 'Caracas, Distrito Capital',
+                email: 'avillalobos@correo.com',
+                phone: '+58 414 482 9104',
+                vehicle: 'Toyota Hilux Blanca • AA492KL',
+                checkInDate: getTodayISO(),
+                checkOutDate: getOffsetDateISO(2),
+                room: 'Suite Amarama',
+                plan: 'Full Pensión (Todas las comidas)',
+                adults: 2,
+                children: 0,
+                totalPlan: 240,
+                abono: 120,
+                resta: 120,
+                masaje: 45,
+                bSonido: 30,
+                aqua: 0,
+                iHielo: 0,
+                extra: 0,
+                totalGeneral: 315,
+                paymentRef: 'Zelle #90412',
+                notes: 'Aniversario. Reserva sesión de Masaje y Baño de Sonido.'
+            },
+            {
+                id: 'demo-2',
+                timestamp: 'Hoy, 11:40 a.m.',
+                fullName: 'Mariana Sofía Duarte',
+                docType: 'V-',
+                docNumber: '21.309.774',
+                address: 'Valencia, Carabobo',
+                email: 'mariana.duarte@correo.com',
+                phone: '+58 412 773 1820',
+                vehicle: 'Hyundai Tucson Gris • AD819MN',
+                checkInDate: getTodayISO(),
+                checkOutDate: getOffsetDateISO(1),
+                room: 'Habitación 2',
+                plan: 'Con Desayuno',
+                adults: 2,
+                children: 1,
+                totalPlan: 140,
+                abono: 140,
+                resta: 0,
+                masaje: 0,
+                bSonido: 0,
+                aqua: 25,
+                iHielo: 20,
+                extra: 10,
+                totalGeneral: 195,
+                paymentRef: 'Pago Móvil #4418',
+                notes: 'Terapia Aqua e Inmersión en Hielo agendadas para la tarde.'
+            }
+        ];
+
+        // Utilidades de fechas
+        function getTodayISO() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const local = new Date(now.getTime() - (offset * 60 * 1000));
+            return local.toISOString().split('T')[0];
+        }
+
+        function getOffsetDateISO(days) {
+            const now = new Date();
+            now.setDate(now.getDate() + days);
+            const offset = now.getTimezoneOffset();
+            const local = new Date(now.getTime() - (offset * 60 * 1000));
+            return local.toISOString().split('T')[0];
+        }
+
+        function formatDisplayDate(isoStr) {
+            if (!isoStr) return '';
+            const [y, m, d] = isoStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function formatMoney(val) {
+            const num = parseFloat(val || 0);
+            return num > 0 ? `$${num.toFixed(2)}` : '—';
+        }
+
+        // Inicialización al cargar la página
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initDates();
+            initStorage();
+            updateSheetsStatusUI();
+            renderGuestsTable();
+        });
+
+        function initDates() {
+            document.getElementById('checkInDate').value = getTodayISO();
+            document.getElementById('checkOutDate').value = getOffsetDateISO(1);
+        }
+
+        function initStorage() {
+            if (!localStorage.getItem(STORAGE_KEY_GUESTS)) {
+                localStorage.setItem(STORAGE_KEY_GUESTS, JSON.stringify(SAMPLE_GUESTS));
+            }
+            const savedWebhook = localStorage.getItem(STORAGE_KEY_WEBHOOK) || '';
+            document.getElementById('webhook-url-input').value = savedWebhook;
+        }
+
+        function getGuests() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY_GUESTS)) || [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveGuests(guests) {
+            localStorage.setItem(STORAGE_KEY_GUESTS, JSON.stringify(guests));
+            renderGuestsTable();
+        }
+
+        // Contadores de Adultos / Niños
+        function adjustCounter(id, delta, min) {
+            const input = document.getElementById(id);
+            let val = parseInt(input.value || min, 10) + delta;
+            if (val < min) val = min;
+            if (val > 15) val = 15;
+            input.value = val;
+        }
+
+        // Cálculo automático de Resta y Total General en el formulario
+        function recalculateFormTotals() {
+            const totalPlan = parseFloat(document.getElementById('totalPlan').value) || 0;
+            const abono = parseFloat(document.getElementById('abono').value) || 0;
+            const masaje = parseFloat(document.getElementById('masaje').value) || 0;
+            const bSonido = parseFloat(document.getElementById('bSonido').value) || 0;
+            const aqua = parseFloat(document.getElementById('aqua').value) || 0;
+            const iHielo = parseFloat(document.getElementById('iHielo').value) || 0;
+            const extra = parseFloat(document.getElementById('extra').value) || 0;
+
+            const resta = Math.max(0, totalPlan - abono);
+            const totalGeneral = totalPlan + masaje + bSonido + aqua + iHielo + extra;
+
+            document.getElementById('resta').value = resta > 0 ? resta.toFixed(2) : (totalPlan > 0 ? '0.00' : '');
+            document.getElementById('totalGeneral').value = totalGeneral > 0 ? totalGeneral.toFixed(2) : '';
+        }
+
+        // =====================================================================
+        // ENVÍO DEL FORMULARIO Y SINCRONIZACIÓN CON GOOGLE SHEETS
+        // =====================================================================
+        async function sendPayloadToGoogleSheets(guestObj) {
+            const webhookUrl = localStorage.getItem(STORAGE_KEY_WEBHOOK);
+            if (!webhookUrl || !webhookUrl.startsWith('https://')) return false;
+            try {
+                await fetch(webhookUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(guestObj)
+                });
+                return true;
+            } catch (err) {
+                console.error('Error enviando a Google Sheets:', err);
+                return false;
+            }
+        }
+
+        document.getElementById('checkin-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const docType = document.getElementById('docType').value;
+            const docNumber = document.getElementById('docNumber').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const vehicle = document.getElementById('vehicle').value.trim();
+            const checkInDate = document.getElementById('checkInDate').value;
+            const checkOutDate = document.getElementById('checkOutDate').value;
+            const room = document.getElementById('room').value.trim();
+            const plan = document.getElementById('plan').value;
+            const adults = parseInt(document.getElementById('adults').value, 10) || 1;
+            const children = parseInt(document.getElementById('children').value, 10) || 0;
+
+            // Campos opcionales de liquidación y servicios
+            const totalPlan = parseFloat(document.getElementById('totalPlan').value) || 0;
+            const abono = parseFloat(document.getElementById('abono').value) || 0;
+            const resta = parseFloat(document.getElementById('resta').value) || 0;
+            const masaje = parseFloat(document.getElementById('masaje').value) || 0;
+            const bSonido = parseFloat(document.getElementById('bSonido').value) || 0;
+            const aqua = parseFloat(document.getElementById('aqua').value) || 0;
+            const iHielo = parseFloat(document.getElementById('iHielo').value) || 0;
+            const extra = parseFloat(document.getElementById('extra').value) || 0;
+            const totalGeneral = parseFloat(document.getElementById('totalGeneral').value) || (totalPlan + masaje + bSonido + aqua + iHielo + extra);
+            const paymentRef = document.getElementById('paymentRef').value.trim();
+            const notes = document.getElementById('notes').value.trim();
+
+            if (!fullName || !docNumber || !phone || !email || !address || !checkInDate || !checkOutDate || !room) {
+                showToast('Por favor completa todos los campos obligatorios marcados con *', 'warning');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-btn');
+            const originalBtnHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i><span>Registrando tu llegada...</span>`;
+            lucide.createIcons();
+
+            const nowTime = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+            const newGuest = {
+                id: 'guest-' + Date.now(),
+                timestamp: `Hoy, ${nowTime}`,
+                fullName,
+                docType,
+                docNumber,
+                address,
+                email,
+                phone,
+                vehicle,
+                checkInDate,
+                checkOutDate,
+                room,
+                plan,
+                adults,
+                children,
+                totalPlan,
+                abono,
+                resta,
+                masaje,
+                bSonido,
+                aqua,
+                iHielo,
+                extra,
+                totalGeneral,
+                paymentRef,
+                notes
+            };
+
+            const guests = getGuests();
+            guests.unshift(newGuest);
+            saveGuests(guests);
+
+            const syncedToSheets = await sendPayloadToGoogleSheets(newGuest);
+
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+                lucide.createIcons();
+
+                const firstName = fullName.split(' ')[0];
+                document.getElementById('welcome-guest-name').textContent = firstName;
+                document.getElementById('summary-room').textContent = room;
+                document.getElementById('summary-plan').textContent = `Plan: ${plan}`;
+                document.getElementById('summary-dates').textContent = `F.I.: ${formatDisplayDate(checkInDate)} • F.S.: ${formatDisplayDate(checkOutDate)}`;
+
+                const syncText = document.getElementById('sync-feedback-text');
+                syncText.textContent = syncedToSheets
+                    ? 'Sincronizado automáticamente con Google Sheets'
+                    : 'Guardado en el libro de recepción';
+
+                document.getElementById('checkin-form').classList.add('hidden');
+                document.getElementById('welcome-screen').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast('¡Bienvenido a Posada Amarama!', 'success');
+            }, 450);
+        });
+
+        // Registrar acompañante manteniendo datos de la estadía
+        function registerCompanion() {
+            const currentRoom = document.getElementById('room').value;
+            const currentPlan = document.getElementById('plan').value;
+            const currentIn = document.getElementById('checkInDate').value;
+            const currentOut = document.getElementById('checkOutDate').value;
+            const currentAddress = document.getElementById('address').value;
+
+            document.getElementById('fullName').value = '';
+            document.getElementById('docNumber').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('notes').value = '';
+
+            document.getElementById('room').value = currentRoom;
+            document.getElementById('plan').value = currentPlan;
+            document.getElementById('checkInDate').value = currentIn;
+            document.getElementById('checkOutDate').value = currentOut;
+            document.getElementById('address').value = currentAddress;
+
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('checkin-form').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('Completa los datos personales de tu acompañante', 'info');
+        }
+
+        function resetFormForNewGuest() {
+            document.getElementById('checkin-form').reset();
+            initDates();
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('checkin-form').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // =====================================================================
+        // PANEL DE RECEPCIÓN, EDICIÓN DE MONTOS, TABLA Y CSV
+        // =====================================================================
+        // PANEL DE RECEPCIÓN, EDICIÓN DE MONTOS, TABLA 24 COLS Y CSV
+        // =====================================================================
+        function renderGuestsTable() {
+            const guests = getGuests();
+            const tbody = document.getElementById('guests-table-body');
+            document.getElementById('guest-count-badge').textContent = guests.length;
+            document.getElementById('tab-guest-count').textContent = guests.length;
+
+            if (guests.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="25" class="py-8 text-center text-amarama-muted">Aún no hay huéspedes registrados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = guests.map(g => `
+                <tr class="hover:bg-amarama-cream transition">
+                    <td class="py-2.5 px-3 sticky left-0 bg-white z-10 border-r border-amarama-sand">
+                        <button type="button" onclick="openEditDrawer('${escapeHtml(g.id)}')" class="px-2.5 py-1 rounded-lg bg-amarama-sage/20 hover:bg-amarama-sage/35 text-amarama-charcoal font-bold text-[11px] transition flex items-center gap-1">
+                            <i data-lucide="edit-3" class="w-3 h-3 text-[#6D8F3B]"></i> Editar / Cargar
+                        </button>
+                    </td>
+                    <td class="py-2.5 px-3 text-[11px] text-amarama-muted">${escapeHtml(g.timestamp || '')}</td>
+                    <td class="py-2.5 px-3 font-bold text-amarama-charcoal">${escapeHtml(g.fullName)}</td>
+                    <td class="py-2.5 px-3 font-mono">${escapeHtml(g.docType)}${escapeHtml(g.docNumber)}</td>
+                    <td class="py-2.5 px-3">${escapeHtml(g.address)}</td>
+                    <td class="py-2.5 px-3 text-amarama-muted">${escapeHtml(g.email)}</td>
+                    <td class="py-2.5 px-3">${escapeHtml(g.phone)}</td>
+                    <td class="py-2.5 px-3">${escapeHtml(g.vehicle || '—')}</td>
+                    <td class="py-2.5 px-3 font-semibold">${formatDisplayDate(g.checkInDate)}</td>
+                    <td class="py-2.5 px-3">${formatDisplayDate(g.checkOutDate)}</td>
+                    <td class="py-2.5 px-3">
+                        <span class="px-2 py-0.5 rounded-md bg-amarama-lavender/20 text-amarama-indigo font-bold text-[11px]">${escapeHtml(g.room)}</span>
+                    </td>
+                    <td class="py-2.5 px-3">${escapeHtml(g.plan || '—')}</td>
+                    <td class="py-2.5 px-3 text-center font-semibold">${g.adults}</td>
+                    <td class="py-2.5 px-3 text-center">${g.children}</td>
+                    <td class="py-2.5 px-3 font-semibold">${formatMoney(g.totalPlan)}</td>
+                    <td class="py-2.5 px-3 text-[#5E9428] font-semibold">${formatMoney(g.abono)}</td>
+                    <td class="py-2.5 px-3 text-amarama-coral font-bold">${formatMoney(g.resta)}</td>
+                    <td class="py-2.5 px-3">${formatMoney(g.masaje)}</td>
+                    <td class="py-2.5 px-3">${formatMoney(g.bSonido)}</td>
+                    <td class="py-2.5 px-3">${formatMoney(g.aqua)}</td>
+                    <td class="py-2.5 px-3">${formatMoney(g.iHielo)}</td>
+                    <td class="py-2.5 px-3">${formatMoney(g.extra)}</td>
+                    <td class="py-2.5 px-3 font-bold text-[#5A7B2B]">${formatMoney(g.totalGeneral)}</td>
+                    <td class="py-2.5 px-3 font-mono text-[11px]">${escapeHtml(g.paymentRef || '—')}</td>
+                    <td class="py-2.5 px-3 max-w-[180px] truncate text-amarama-muted" title="${escapeHtml(g.notes || '')}">${escapeHtml(g.notes || '—')}</td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        // Edición desde recepción de consumos (Masaje, B. Sonido, Aqua, I. Hielo, Extra, Abono, Resta, Ref)
+        function openEditDrawer(guestId) {
+            const guests = getGuests();
+            const g = guests.find(item => item.id === guestId);
+            if (!g) return;
+
+            document.getElementById('edit-guest-id').value = g.id;
+            document.getElementById('edit-guest-title').textContent = `${g.fullName} (${g.docType}${g.docNumber})`;
+            document.getElementById('edit-room').value = g.room || '';
+            document.getElementById('edit-plan').value = g.plan || '';
+            document.getElementById('edit-totalPlan').value = g.totalPlan || '';
+            document.getElementById('edit-abono').value = g.abono || '';
+            document.getElementById('edit-resta').value = g.resta || '';
+            document.getElementById('edit-masaje').value = g.masaje || '';
+            document.getElementById('edit-bSonido').value = g.bSonido || '';
+            document.getElementById('edit-aqua').value = g.aqua || '';
+            document.getElementById('edit-iHielo').value = g.iHielo || '';
+            document.getElementById('edit-extra').value = g.extra || '';
+            document.getElementById('edit-totalGeneral').value = g.totalGeneral || '';
+            document.getElementById('edit-paymentRef').value = g.paymentRef || '';
+            document.getElementById('edit-notes').value = g.notes || '';
+
+            document.getElementById('edit-guest-drawer').classList.remove('hidden');
+        }
+
+        function closeEditDrawer() {
+            document.getElementById('edit-guest-drawer').classList.add('hidden');
+        }
+
+        function recalcEditModal() {
+            const totalPlan = parseFloat(document.getElementById('edit-totalPlan').value) || 0;
+            const abono = parseFloat(document.getElementById('edit-abono').value) || 0;
+            const masaje = parseFloat(document.getElementById('edit-masaje').value) || 0;
+            const bSonido = parseFloat(document.getElementById('edit-bSonido').value) || 0;
+            const aqua = parseFloat(document.getElementById('edit-aqua').value) || 0;
+            const iHielo = parseFloat(document.getElementById('edit-iHielo').value) || 0;
+            const extra = parseFloat(document.getElementById('edit-extra').value) || 0;
+
+            const resta = Math.max(0, totalPlan - abono);
+            const totalGeneral = totalPlan + masaje + bSonido + aqua + iHielo + extra;
+
+            document.getElementById('edit-resta').value = resta.toFixed(2);
+            document.getElementById('edit-totalGeneral').value = totalGeneral.toFixed(2);
+        }
+
+        async function saveGuestEdits(alsoSendToSheets) {
+            const id = document.getElementById('edit-guest-id').value;
+            const guests = getGuests();
+            const idx = guests.findIndex(item => item.id === id);
+            if (idx === -1) return;
+
+            guests[idx] = {
+                ...guests[idx],
+                room: document.getElementById('edit-room').value.trim(),
+                plan: document.getElementById('edit-plan').value.trim(),
+                totalPlan: parseFloat(document.getElementById('edit-totalPlan').value) || 0,
+                abono: parseFloat(document.getElementById('edit-abono').value) || 0,
+                resta: parseFloat(document.getElementById('edit-resta').value) || 0,
+                masaje: parseFloat(document.getElementById('edit-masaje').value) || 0,
+                bSonido: parseFloat(document.getElementById('edit-bSonido').value) || 0,
+                aqua: parseFloat(document.getElementById('edit-aqua').value) || 0,
+                iHielo: parseFloat(document.getElementById('edit-iHielo').value) || 0,
+                extra: parseFloat(document.getElementById('edit-extra').value) || 0,
+                totalGeneral: parseFloat(document.getElementById('edit-totalGeneral').value) || 0,
+                paymentRef: document.getElementById('edit-paymentRef').value.trim(),
+                notes: document.getElementById('edit-notes').value.trim()
+            };
+
+            saveGuests(guests);
+            closeEditDrawer();
+
+            if (alsoSendToSheets) {
+                const ok = await sendPayloadToGoogleSheets(guests[idx]);
+                showToast(ok ? 'Ficha actualizada y enviada a Google Sheets' : 'Guardado local. Configura la URL de Google Sheets para envío automático.', ok ? 'success' : 'info');
+            } else {
+                showToast('Cambios guardados en la ficha de recepción', 'success');
+            }
+        }
+
+        function exportToCSV() {
+            const guests = getGuests();
+            if (!guests.length) {
+                showToast('No hay registros para exportar.', 'warning');
+                return;
+            }
+
+            const headers = [
+                'Fecha Registro', 'Nombre y Apellido', 'C.I.', 'Dirección',
+                'Mail', 'Tlf', 'Modelo Vehículo', 'F.I.', 'F.S.', 'Hab',
+                'Plan', 'Adultos', 'Niños', 'Total Plan', 'Abono', 'Resta',
+                'Masaje', 'B. Sonido', 'Aqua', 'I. Hielo', 'Extra',
+                'Total General', 'Ref', 'Notas'
+            ];
+
+            const rows = guests.map(g => [
+                g.timestamp || '',
+                g.fullName,
+                `${g.docType}${g.docNumber}`,
+                g.address,
+                g.email,
+                g.phone,
+                g.vehicle || 'Sin vehículo',
+                g.checkInDate,
+                g.checkOutDate,
+                g.room,
+                g.plan,
+                g.adults,
+                g.children,
+                g.totalPlan || 0,
+                g.abono || 0,
+                g.resta || 0,
+                g.masaje || 0,
+                g.bSonido || 0,
+                g.aqua || 0,
+                g.iHielo || 0,
+                g.extra || 0,
+                g.totalGeneral || 0,
+                g.paymentRef || '',
+                g.notes || ''
+            ]);
+
+            const csvContent = '\uFEFF' + [headers, ...rows]
+                .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+                .join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Posada_Amarama_Registro_${getTodayISO()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('Excel / CSV descargado con las 24 columnas de Amarama.', 'success');
+        }
+
+        function saveWebhookUrl() {
+            const url = document.getElementById('webhook-url-input').value.trim();
+            if (url && !url.startsWith('https://script.google.com/')) {
+                showToast('La URL debe comenzar con https://script.google.com/...', 'warning');
+                return;
+            }
+            localStorage.setItem(STORAGE_KEY_WEBHOOK, url);
+            updateSheetsStatusUI();
+            showToast(url ? '¡Conexión con Google Sheets activada!' : 'URL eliminada. Modo local activo.', 'success');
+        }
+
+        function updateSheetsStatusUI() {
+            const url = localStorage.getItem(STORAGE_KEY_WEBHOOK);
+            const dot = document.getElementById('sheets-status-dot');
+            const text = document.getElementById('sheets-status-text');
+
+            if (url) {
+                dot.className = 'w-2 h-2 rounded-full bg-amarama-lime';
+                text.textContent = 'Conectado en vivo con Google Sheets';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-amarama-gold';
+                text.textContent = 'Modo Local Activo (Listo para vincular Google Sheets)';
+            }
+        }
+
+        // =====================================================================
+        // GENERADOR DE CÓDIGO QR DE RECEPCIÓN
+        // =====================================================================
+        let qrInstance = null;
+
+        function openQrModal() {
+            const modal = document.getElementById('qr-modal');
+            modal.classList.remove('hidden');
+
+            const urlInput = document.getElementById('qr-url-input');
+            if (!urlInput.value) {
+                const currentUrl = window.location.href.startsWith('http')
+                    ? window.location.href
+                    : 'https://checkin.posadaamarama.com';
+                urlInput.value = currentUrl;
+            }
+            renderQRCode(urlInput.value);
+            lucide.createIcons();
+        }
+
+        function regenerateQR() {
+            const val = document.getElementById('qr-url-input').value.trim() || 'https://checkin.posadaamarama.com';
+            renderQRCode(val);
+            showToast('Código QR actualizado', 'success');
+        }
+
+        function renderQRCode(text) {
+            const container = document.getElementById('qrcode-container');
+            container.innerHTML = '';
+            qrInstance = new QRCode(container, {
+                text: text,
+                width: 172,
+                height: 172,
+                colorDark: '#363430',
+                colorLight: '#FFFFFF',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // =====================================================================
+        // MODALES, PORTAPAPELES Y NOTIFICACIONES
+        // =====================================================================
+        function openAdminModal() {
+            renderGuestsTable();
+            document.getElementById('admin-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function switchAdminTab(tab) {
+            const guestsTab = document.getElementById('admin-tab-guests');
+            const sheetsTab = document.getElementById('admin-tab-sheets');
+            const btnGuests = document.getElementById('tab-btn-guests');
+            const btnSheets = document.getElementById('tab-btn-sheets');
+
+            if (tab === 'guests') {
+                guestsTab.classList.remove('hidden');
+                sheetsTab.classList.add('hidden');
+                btnGuests.className = 'px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl bg-amarama-cream text-amarama-charcoal border-t border-x border-amarama-border -mb-px transition';
+                btnSheets.className = 'px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl text-amarama-muted hover:text-amarama-charcoal transition flex items-center gap-1.5';
+            } else {
+                guestsTab.classList.add('hidden');
+                sheetsTab.classList.remove('hidden');
+                btnSheets.className = 'px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl bg-amarama-cream text-amarama-charcoal border-t border-x border-amarama-border -mb-px transition flex items-center gap-1.5';
+                btnGuests.className = 'px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl text-amarama-muted hover:text-amarama-charcoal transition';
+            }
+        }
+
+        function copyToClipboardFallback(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+
+        function copyWifiPassword() {
+            const pass = document.getElementById('wifi-pass').textContent;
+            copyToClipboardFallback(pass);
+            showToast('Clave de Wi-Fi copiada al portapapeles', 'success');
+        }
+
+        function copyAppsScriptCode() {
+            const code = document.getElementById('apps-script-code').textContent;
+            copyToClipboardFallback(code);
+            showToast('Código de Google Apps Script copiado', 'success');
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const colors = {
+                success: 'bg-white text-amarama-charcoal border-amarama-lime',
+                warning: 'bg-amarama-coral text-white border-amarama-coral',
+                info: 'bg-white text-amarama-charcoal border-amarama-lavender'
+            };
+
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-soft border-2 text-xs font-semibold flex items-center gap-2.5 animate-fade-up ${colors[type] || colors.info}`;
+            toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3400);
+        }
+    </script>
+</body>
+</html>
